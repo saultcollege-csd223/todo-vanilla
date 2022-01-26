@@ -1,14 +1,14 @@
-const taskInput = document.getElementById("new-task"); 
-const addButton = document.getElementById("add-button"); 
-const todoList = document.getElementById("todo-list"); 
+const $taskInput = $("#new-task"); 
+const $addButton = $("#add-button"); 
+const $todoList = $("#todo-list"); 
 
 // Restore todos from a previos session if possible
 loadFromLocalStorage();
 
 // Set up handlers for the events that must cause a new TODO to be added
-addButton.addEventListener("click", addTask);
-taskInput.addEventListener("keypress", (e) => {
-    if ( e.key == "Enter" && taskInput.value != "") {
+$addButton.click(addTask);
+$taskInput.keypress((e) => {
+    if ( e.key == "Enter" && $taskInput.val() != "") {
         addTask();
     }
 });
@@ -16,17 +16,17 @@ taskInput.addEventListener("keypress", (e) => {
 /**
  * Adds a new task to the todo list
  */
-function addTask() {
-    if (taskInput.value == "") {
+ function addTask() {
+    if ($taskInput.val() == "") {
         alert("Task to be added should not be empty!");
         return;
     }
-    const task = taskInput.value;
-    let listItem = createNewTask(task);
-    todoList.appendChild(listItem);
+    const task = $taskInput.val();
+    let $listItem = createNewTask(task);
+    $todoList.append($listItem);
 
     // Clear the todo input
-    taskInput.value = "";
+    $taskInput.val("");
 
     updateLocalStorage();
 }
@@ -37,41 +37,40 @@ function addTask() {
  * @param {boolean} completed Whether or not the task is completed
  * @returns A <li> element containing the UI for a task, with its 'check' and 'delete' buttons
  */
-function createNewTask(taskName, completed=false) {
+ function createNewTask(taskName, completed=false) {
+    // create List Item
+    const $listItem = $("<li>");
+    // input (text)
+    const $editInput = $(`<input type="text">`);
+    // button.edit
+    const $checkButton = $('<button class="check">✓</button>');
+    // button.delete
+    const $deleteButton = $('<button class="delete">X</button>');
 
-    const editInput = document.createElement("input");
-    editInput.type = "text";
-    editInput.value = taskName;
+    //Each element needs modified 
+    $editInput.val(taskName);
 
-    const checkButton = document.createElement("button");
-    checkButton.innerText = "✓";
-    checkButton.className = "check";
-    checkButton.onclick = taskCompleted;
+    $checkButton.click(taskCompleted);
+    $deleteButton.click(deleteTask);
 
-    const deleteButton = document.createElement("button");
-    deleteButton.innerText = "X";
-    deleteButton.className = "delete";
-    deleteButton.onclick = deleteTask;
+    $listItem.append($checkButton)
+             .append($editInput)
+             .append($deleteButton);
 
-    const listItem = document.createElement("li");
-    listItem.appendChild(checkButton);
-    listItem.appendChild(editInput);
-    listItem.appendChild(deleteButton);
     if ( completed ) {
-        listItem.classList.add('done');
+        $listItem.addClass('done');
     }
 
-    return listItem;
+    return $listItem;
 }
 
 /**
  * Handles the click of the delete button on a task
  * @param {Event} event The click event object
  */
-function deleteTask(event) {
-    const deleteButton = event.target
+ function deleteTask() {
     // Remove the list item corresponding to the clicked delete button
-    deleteButton.parentNode.parentNode.removeChild(deleteButton.parentNode);
+    $(this).parent().remove();
 
     updateLocalStorage();
 }
@@ -80,16 +79,14 @@ function deleteTask(event) {
  * Handles the click of the 'check' button on a task when the task was not yet complete
  * @param {Event} event The click event
  */
-function taskCompleted(event) {
-    
-    const checkButton = event.target;
-    
-    // Mark task now as completed
-    checkButton.parentNode.classList.add('done');
+ function taskCompleted(event) {
+    // Mark task as completed
+    const $checkButton = $(this);
+    $checkButton.parent().addClass('done');
 
     // Clicking the check button now must mark it as incomplete again
-    checkButton.onclick = taskIncomplete;
-    checkButton.innerHTML = "＋";  // Change the text to better reflect the button's new purpose
+    $checkButton.click(taskIncomplete)
+                .html("＋"); // Change the text to better reflect the button's new purpose
 
     updateLocalStorage();
 }
@@ -98,16 +95,14 @@ function taskCompleted(event) {
  * Handles the click of the 'check' button on a task when it was already completed
  * @param {Event} event The click event
  */
-function taskIncomplete(event) {
-
-    const checkButton = event.target;
-    
-    // Mark task now as incomplete
-    checkButton.parentNode.classList.remove('done');
+ function taskIncomplete(event) {
+    // Mark task as incomplete
+    const $checkButton = $(this);
+    $checkButton.parent().removeClass('done');
     
     // Clicking the button now must mark it as completed again
-    checkButton.onclick = taskCompleted;
-    checkButton.innerHTML = "✓";  // Change the text to better reflect its new purpose
+    $checkButton.click(taskCompleted)
+                .html("✓"); // Change the text to better reflect its new purpose
 
     updateLocalStorage();
 }
@@ -115,18 +110,19 @@ function taskIncomplete(event) {
 /**
  * Stores the current TODO list in localStorage
  */
-function updateLocalStorage() {
-    let todos = [];  // We'll make an array of { task, complete } objects and JSONify it
-    for ( const listItem of todoList.children ) {
+ function updateLocalStorage() {
+    let todos = []; // We'll make an array of { task, complete } objects and JSONify it
+
+    $('#todo-list li').each(function() {
         let complete = false;
-        if ( listItem.classList.contains('done') ) {
+        if ( $(this).hasClass('done') ) {
             complete = true;
         }
 
-        const task = listItem.querySelector('input').value;
+        const task = $(this).find('input').val();
 
-        todos.push({ task, complete });
-    }
+        todos.push({ task, complete});
+    })
 
     localStorage.setItem('todos', JSON.stringify(todos));
 }
@@ -135,12 +131,12 @@ function updateLocalStorage() {
  * Loads a TODO list from localStorage and sets up the corresponding UI
  */
 function loadFromLocalStorage() {
-    let todos = JSON.parse(localStorage.getItem('todos'));  // See updateLocalStorage
+    let todos = JSON.parse(localStorage.getItem('todos')); // See updateLocalStorage
 
     if ( todos ) {
         for ( const todo of todos ) {
             // Make a new task list item for each item in the TODO list
-            todoList.appendChild(createNewTask(todo.task, todo.complete));
+            $todoList.append(createNewTask(todo.task, todo.complete));
         }
     }
 }
