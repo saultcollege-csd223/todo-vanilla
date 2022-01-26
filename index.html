@@ -4,30 +4,33 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>To-do list</title>
+    <title>To-do list (Alpine)</title>
     <link rel="stylesheet" href="style.css">
     
     <script defer src="script.js"></script>
+    <script defer src="//unpkg.com/alpinejs"></script>
 
 </head>
 
 
 <body>
 
-    <main>
+    <main x-data="todoApp" x-effect="updateLocalStorage(todos)">
         <section>
             <h1 id="title">TO DO LIST</h1>
             <div class="control-row">
-                <input id="new-task" type="text" placeholder="Add a task"><button id="add-button">＋</button>
+                <input x-model="newTaskName" id="new-task" type="text" placeholder="Add a task" @keyup.enter="newTaskName ? addTask() : alert('Task to be added should not be empty!');"><button id="add-button" @click="addTask()">＋</button>
             </div>
         </section>
         <section>
             <h3>To-do</h3>
             <ul id="todo-list">
+                <template x-for="(item, index) in todos">
+                    <li :class="item.complete ? 'done' : ''"><button class="check" @click="toggleComplete(item)" x-text="item.complete ? '＋' : '✓'">✓</button><input type="text" x-model="item.task"><button class="delete" @click="deleteTask(index)">X</button></li>
+                </template>
             </ul>
         </section>
     </main>
 </body>
-
 
 </html>
